@@ -1,4 +1,6 @@
 # Mars Rover
+Maintainer: Jan Schmitt
 
-# Maintainer: Jan Schmitt
-# Login: jasch264
+Login: jasch264
+
+---
