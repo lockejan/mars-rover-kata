@@ -21,12 +21,12 @@
     value))
 
 (defn print-board! []
-  (let [{:keys [height width obstacles]} @state]
+  (let [{:keys [height width obstacles rover]} @state]
     (doseq [y (range height)]
       (doseq [x (range width)]
         (let [value
               (if (get obstacles (pos x y)) :obstacles
-                    (if (= (get @state :rover) (pos x y)) :rover nil))]
+                    (if (= rover (pos x y)) :rover nil))]
           (print (pretty-print value))))
       (newline))))
 
