@@ -34,8 +34,16 @@
 
 (defn move [state x]
   (case x
-    \f (update-in state [:rover :position :y] inc)
-    \b (update-in state [:rover :position :y] dec)))
+    \f (case (get-in state [:rover :direction])
+         \N (update-in state [:rover :position :y] dec)
+         \E (update-in state [:rover :position :x] inc)
+         \S (update-in state [:rover :position :y] inc)
+         \W (update-in state [:rover :position :x] dec))
+    \b (case (get-in state [:rover :direction])
+         \N (update-in state [:rover :position :y] inc)
+         \E (update-in state [:rover :position :x] dec)
+         \S (update-in state [:rover :position :y] dec)
+         \W (update-in state [:rover :position :x] inc))))
 
 (defn rotate [state x]
   (case x
@@ -51,7 +59,7 @@
          \W (assoc-in state [:rover :direction] \S))))
 
 (defn init!
-  ([] (init! 16 30 (* 16 30 0.1)))
+  ([] (init! 10 20 (* 10 20 0.1)))
   ([height width amount-of-obstacles]
    (reset! state {:height    height
                   :width     width
@@ -70,7 +78,6 @@
 (defmethod hello :default [_ _] (println "No matching case implemented...yet"))
 
 (defn hello-rover [state msg]
-  (println msg state)
   (if (empty? msg)
     state
     (let [new-state (hello state (first msg))]
@@ -82,5 +89,7 @@
 
 
 ; Init and first test
+
+
 (init!)
-(hello-rover! "bx")
+;(hello-rover! "fffllrf")
