@@ -1,5 +1,6 @@
 (ns cruisen.core
-  (:gen-class))
+  (:gen-class)
+  (:require [clojure.spec.alpha :as s]))
 
 (def state (atom {}))
 
@@ -9,17 +10,16 @@
   (let [entire-board (for [x (range width)
                            y (range height)]
                        (pos x y))]
-    (take amount-of-obstacles (shuffle entire-board))))
+    (take amount-of-obstacles (shuffle (next entire-board)))))
 
 (defn pretty-print [value]
   (case value
+    :N \∧
+    :S \∨
+    :W \<
+    :E \>
     :obstacles \X
     nil \-
-    :rover \O
-    \N \∧
-    \S \∨
-    \W \<
-    \E \>
     value))
 
 (defn print-board! []
@@ -35,35 +35,51 @@
 (defn move [state x]
   (case x
     \f (case (get-in state [:rover :direction])
-         \N (update-in state [:rover :position :y] dec)
-         \E (update-in state [:rover :position :x] inc)
-         \S (update-in state [:rover :position :y] inc)
-         \W (update-in state [:rover :position :x] dec))
+         :N (if (= (get-in state [:rover :position :y]) 0)
+              (update-in state [:rover :position :y] + (dec (get-in state [:height])))
+              (update-in state [:rover :position :y] dec))
+         :E (if (= (get-in state [:rover :position :x]) (dec (get-in state [:width])))
+              (update-in state [:rover :position :x] - (dec (get-in state [:width])))
+              (update-in state [:rover :position :x] inc))
+         :S (if (= (get-in state [:rover :position :y]) (dec (get-in state [:height])))
+              (update-in state [:rover :position :y] - (dec (get-in state [:height])))
+              (update-in state [:rover :position :y] inc))
+         :W (if (= (get-in state [:rover :position :x]) 0)
+              (update-in state [:rover :position :x] + (dec (get-in state [:width])))
+              (update-in state [:rover :position :x] dec)))
     \b (case (get-in state [:rover :direction])
-         \N (update-in state [:rover :position :y] inc)
-         \E (update-in state [:rover :position :x] dec)
-         \S (update-in state [:rover :position :y] dec)
-         \W (update-in state [:rover :position :x] inc))))
+         :N (if (= (get-in state [:rover :position :y]) (dec (get-in state [:height])))
+              (update-in state [:rover :position :y] - (dec (get-in state [:height])))
+              (update-in state [:rover :position :y] inc))
+         :E (if (= (get-in state [:rover :position :x]) 0)
+              (update-in state [:rover :position :x] + (dec (get-in state [:width])))
+              (update-in state [:rover :position :x] dec))
+         :S (if (= (get-in state [:rover :position :y]) 0)
+              (update-in state [:rover :position :y] + (dec (get-in state [:height])))
+              (update-in state [:rover :position :y] dec))
+         :W (if (= (get-in state [:rover :position :x]) (dec (get-in state [:width])))
+              (update-in state [:rover :position :x] - (dec (get-in state [:width])))
+              (update-in state [:rover :position :x] inc)))))
 
 (defn rotate [state x]
   (case x
     \r (case (get-in state [:rover :direction])
-         \N (assoc-in state [:rover :direction] \E)
-         \E (assoc-in state [:rover :direction] \S)
-         \S (assoc-in state [:rover :direction] \W)
-         \W (assoc-in state [:rover :direction] \N))
+         :N (assoc-in state [:rover :direction] :E)
+         :E (assoc-in state [:rover :direction] :S)
+         :S (assoc-in state [:rover :direction] :W)
+         :W (assoc-in state [:rover :direction] :N))
     \l (case (get-in state [:rover :direction])
-         \N (assoc-in state [:rover :direction] \W)
-         \E (assoc-in state [:rover :direction] \N)
-         \S (assoc-in state [:rover :direction] \E)
-         \W (assoc-in state [:rover :direction] \S))))
+         :N (assoc-in state [:rover :direction] :W)
+         :E (assoc-in state [:rover :direction] :N)
+         :S (assoc-in state [:rover :direction] :E)
+         :W (assoc-in state [:rover :direction] :S))))
 
 (defn init!
   ([] (init! 10 20 (* 10 20 0.1)))
   ([height width amount-of-obstacles]
    (reset! state {:height    height
                   :width     width
-                  :rover     {:position {:x 0 :y 0} :direction \S}
+                  :rover     {:position {:x 0 :y 0} :direction :N}
                   :status    :fine
                   :obstacles (set (get-obstacle-positions height
                                                           width
@@ -78,6 +94,8 @@
 (defmethod hello :default [_ _] (println "No matching case implemented...yet"))
 
 (defn hello-rover [state msg]
+  ;(println state)
+  (println (get-in state [:rover :position]) (get-in state [:height]))
   (if (empty? msg)
     state
     (let [new-state (hello state (first msg))]
@@ -89,7 +107,5 @@
 
 
 ; Init and first test
-
-
 (init!)
-;(hello-rover! "fffllrf")
+(hello-rover! "bbbbb")
