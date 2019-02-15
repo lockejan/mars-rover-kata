@@ -4,16 +4,18 @@
 (def state (atom {}))
 
 (defn pos [x y]
-  "return coordinate-map"
+  "expects two lonely coordinates and brings them into a map"
   {:x x, :y y})
 
 (defn get-obstacle-positions [height width amount-of-obstacles]
+  "randomly places the already defined obstacles on the board"
   (let [entire-board (for [x (range width)
                            y (range height)]
                        (pos x y))]
     (take amount-of-obstacles (shuffle (next entire-board)))))
 
 (defn pretty-print [value]
+  "maps a given value to representative chars"
   (case value
     :N \∧
     :S \∨
@@ -24,6 +26,7 @@
     value))
 
 (defn print-board! []
+  "prints board state to console"
   (let [{:keys [height width obstacles rover]} @state]
     (doseq [y (range height)]
       (doseq [x (range width)]
@@ -33,56 +36,36 @@
           (print (pretty-print value))))
       (newline))))
 
-(defn collision [state nxt]
-  (let [obstacles (get-in state [:obstacles])
-        next-step (assoc (get-in state [:rover :position]) :y nxt)]
-    (if (contains? obstacles next-step)
-      (do (assoc state :status (format "obstacle ahead at: %s" next-step)) true))
-      false))
+(defn collision [state tmp-step]
+  (let [obstacles (get-in state [:obstacles])]
+    (if (contains? obstacles tmp-step)
+      (do (println (format "obstacle ahead at: %s" tmp-step)) state)
+      (assoc-in state [:rover :position] tmp-step))))
 
-
-
-(defn move-tmp [state stp]
+(defn tmp-move [state step]
   (let [rover-x (get-in state [:rover :position :x])
         rover-y (get-in state [:rover :position :y])]
     (case (get-in state [:rover :direction])
-      :N (pos rover-x (- rover-y stp))
-      :E (pos () rover-y)
-      :S (pos rover-x ())
-      :W (pos () rover-y))))
+      :N (pos rover-x (- rover-y step))
+      :E (pos (+ rover-x step) rover-y)
+      :S (pos rover-x (+ rover-y step))
+      :W (pos (- rover-x step) rover-y))))
 
-(defn move [state x]
-  (let [rover-d (get-in state [:rover :direction])
-        rover-p (get-in state [:rover :position])
-        height (dec (get-in state [:height]))
-        width (dec (get-in state [:width]))]
-    (case x
-      \f (case rover-d
-           :N (if (= (get rover-p :y) 0)
-                (update-in state [:rover :position :y] + height)
-                (update-in state [:rover :position :y] dec))
-           :E (if (= (get rover-p :x) width)
-                (update-in state [:rover :position :x] - width)
-                (update-in state [:rover :position :x] inc))
-           :S (if (= (get rover-p :y) height)
-                (update-in state [:rover :position :y] - height)
-                (update-in state [:rover :position :y] inc))
-           :W (if (= (get rover-p :x) 0)
-                (update-in state [:rover :position :x] + width)
-                (update-in state [:rover :position :x] dec)))
-      \b (case rover-d
-           :N (if (= (get rover-p :y) height)
-                (update-in state [:rover :position :y] - height)
-                (update-in state [:rover :position :y] inc))
-           :E (if (= (get rover-d :x) 0)
-                (update-in state [:rover :position :x] + width)
-                (update-in state [:rover :position :x] dec))
-           :S (if (= (get rover-d :y) 0)
-                (update-in state [:rover :position :y] + height)
-                (update-in state [:rover :position :y] dec))
-           :W (if (= (get rover-d :x) width)
-                (update-in state [:rover :position :x] - width)
-                (update-in state [:rover :position :x] inc))))))
+(defn wrap-move [new-pos state]
+  (let [height-delta (dec (get-in state [:height]))
+        height (get-in state [:height])
+        width-delta (dec (get-in state [:width]))
+        width (get-in state [:width])]
+    (cond
+      (< (new-pos :y) 0) (update new-pos :y + height)
+      (> (new-pos :y) height-delta) (update new-pos :y - height)
+      (< (new-pos :x) 0) (update new-pos :x + width)
+      (> (new-pos :x) width-delta) (update new-pos :x - width)
+      :else new-pos)))
+
+(defn move [state step]
+  "depending on the "
+  (collision state (wrap-move (tmp-move state step) state)))
 
 (defn new-d [state d]
   "update direction of rover"
@@ -96,10 +79,11 @@
     :else r-idx))
 
 (defn indexes-of [e coll]
-  "returns index of occurrence"
+  "returns index of first occurrence of e in collection"
   (first (keep-indexed #(if (= e %2) %1) coll)))
 
 (defn rotate [state x]
+  "calculates and handles direction update of rover"
   (let [r-map (list :N :E :S :W)]
     (case (get-in state [:rover :direction])
              :N (new-d state (nth r-map (new-r-wrap (+ (indexes-of :N r-map) x))))
@@ -108,6 +92,8 @@
              :W (new-d state (nth r-map (new-r-wrap (+ (indexes-of :W r-map) x)))))))
 
 (defn init!
+  "initial board creation.
+  default "
   ([] (init! 10 20 (* 10 20 0.1)))
   ([height width amount-of-obstacles]
    (reset! state {:height    height
@@ -120,22 +106,24 @@
    (print-board!)))
 
 (defmulti hello (fn [_ x] x))
-(defmethod hello \f [state x] (move state x))
-(defmethod hello \b [state x] (move state x))
+(defmethod hello \f [state _] (move state 1))
+(defmethod hello \b [state _] (move state -1))
 (defmethod hello \l [state _] (rotate state -1))
 (defmethod hello \r [state _] (rotate state 1))
 (defmethod hello :default [state x] (assoc state :status (format "No matching case implemented for \"%s\"...yet. Use l,r,f or b instead." x)))
 
 (defn hello-rover [state msg]
+  "walks through the cmd sequence for the rover"
   (if (empty? msg)
     state
     (let [new-state (hello state (first msg))]
       (recur new-state (rest msg)))))
 
 (defn hello-rover! [msg]
+  "gets the state and prints the board after all operations are done"
   (swap! state hello-rover msg)
   (print-board!))
 
 ; Init and first test
 (init!)
-(hello-rover! "l")
+(hello-rover! "b")
