@@ -100,7 +100,6 @@
    (reset! state {:height    height
                   :width     width
                   :rover     {:position {:x 0 :y 0} :direction :N}
-                  :status    :fine
                   :obstacles (set (get-obstacle-positions height
                                                           width
                                                           amount-of-obstacles))})
