@@ -41,6 +41,22 @@
           (print (pretty-print value))))
       (newline))))
 
+(defn init!
+  "Initial board creation.
+  Accepts two integer values to define the board size.
+    Example call: (init! 10 20)
+  Default values are applied if no values are provided."
+  ([] (init! 10 20))
+  ([height width]
+   (reset! state {:height    height
+                  :width     width
+                  :status    {:fine "Nothing suspicious"}
+                  :rover     {:position {:x 0 :y 0} :direction :E}
+                  :obstacles (set (get-obstacle-positions height
+                                                          width
+                                                          (* height width 0.1)))})
+   (print-board!)))
+
 (defn- collision
   "Checks if tmp-step collides with obstacle and prints the position of the obstacle."
   [state tmp-step]
@@ -48,17 +64,6 @@
     (if (contains? obstacles tmp-step)
       (assoc-in state [:status] {:error (format "Obstacle ahead at: %s" tmp-step)})
       (assoc-in state [:rover :position] tmp-step))))
-
-(defn- tmp-move
-  "Calculates tmp-move without considering board borders."
-  [state step]
-  (let [rover-x (get-in state [:rover :position :x])
-        rover-y (get-in state [:rover :position :y])]
-    (case (get-in state [:rover :direction])
-      :N (pos rover-x (- rover-y step))
-      :E (pos (+ rover-x step) rover-y)
-      :S (pos rover-x (+ rover-y step))
-      :W (pos (- rover-x step) rover-y))))
 
 (defn- wrap-move
   "Handles wrap around of rover."
@@ -72,6 +77,17 @@
       (> (new-pos :x) (dec width)) (update new-pos :x - width)
       :else new-pos)))
 
+(defn- tmp-move
+  "Calculates tmp-move without considering board borders."
+  [state step]
+  (let [rover-x (get-in state [:rover :position :x])
+        rover-y (get-in state [:rover :position :y])]
+    (case (get-in state [:rover :direction])
+      :N (pos rover-x (- rover-y step))
+      :E (pos (+ rover-x step) rover-y)
+      :S (pos rover-x (+ rover-y step))
+      :W (pos (- rover-x step) rover-y))))
+
 (defn- move
   "Chaining all necessary operations to move the rover.
   Conditionals are handled inside the functions which is in charge of the current operation."
@@ -79,7 +95,7 @@
   (collision state (wrap-move (tmp-move state step) state)))
 
 (defn- new-d
-  "Update direction of rover."
+  "Updates direction of rover."
   [state new-d]
   (assoc-in state [:rover :direction] new-d))
 
@@ -105,22 +121,6 @@
       :E (new-d state (nth r-map (new-r-wrap (+ (indexes-of :E r-map) x))))
       :S (new-d state (nth r-map (new-r-wrap (+ (indexes-of :S r-map) x))))
       :W (new-d state (nth r-map (new-r-wrap (+ (indexes-of :W r-map) x)))))))
-
-(defn init!
-  "Initial board creation.
-  Accepts two integer values to define the board size.
-    Example call: (init! 10 20)
-  Default values are applied if no values are provided."
-  ([] (init! 10 20))
-  ([height width]
-   (reset! state {:height    height
-                  :width     width
-                  :status    {:fine "Nothing suspicious"}
-                  :rover     {:position {:x 0 :y 0} :direction :E}
-                  :obstacles (set (get-obstacle-positions height
-                                                          width
-                                                          (* height width 0.1)))})
-   (print-board!)))
 
 (defn- no-match
   "Handles feedback in case of invalid input characters."
