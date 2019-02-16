@@ -116,7 +116,7 @@
    (reset! state {:height    height
                   :width     width
                   :status    {:fine "Nothing suspicious"}
-                  :rover     {:position {:x 0 :y 0} :direction :N}
+                  :rover     {:position {:x 0 :y 0} :direction :E}
                   :obstacles (set (get-obstacle-positions height
                                                           width
                                                           (* height width 0.1)))})
