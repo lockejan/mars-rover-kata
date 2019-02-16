@@ -168,5 +168,5 @@
       (do (swap! state assoc :status {:fine "Nothing suspicious"}) nil))))
 
 ; Init and first test
-(init!)
+;(init!)
 ;(hello-rover! "fff")
