@@ -166,7 +166,3 @@
   (let [{:keys [status]} @state]
     (if (contains? status :error)
       (do (swap! state assoc :status {:fine "Nothing suspicious"}) nil))))
-
-; Init and first test
-;(init!)
-;(hello-rover! "fff")
