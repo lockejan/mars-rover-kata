@@ -6,7 +6,7 @@ Id: lockejan
 
 ---
 
-Implementation of the Mars Rover task.
+Implementation of a custom Mars Rover assignment using clojure.
 
 ## Installation
 
