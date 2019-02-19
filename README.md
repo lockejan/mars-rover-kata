@@ -2,17 +2,16 @@
 
 Maintainer: Jan Schmitt
 
-Id: jasch264
+Id: lockejan
 
 ---
-
-# cruisen
 
 Implementation of the Mars Rover task.
 
 ## Installation
 
-1. Just clone the private Repository https://git.hhu.de/jasch264/mars-rover.
+0. Leiningen needs to be installed on your system.
+1. Just clone the Repository.
 2. Navigate into the **"cruisen"** subdirectory.
 3. Enter **"lein repl"** in your terminal and hit enter. ;)
 
@@ -23,6 +22,8 @@ The API can be used via three functions in general:
 1. **init!** - creates a board, positions obstacles and the rover on it and prints it to the console. It's possible to define a custom board size.
 2. **hello-rover!** - is used to navigate the rover over the board.
 3. **print-board!** - prints out the current board state to the terminal
+
+Call docstrings for more informations via (doc foo)
 
 ## Examples
 
@@ -35,9 +36,6 @@ Or custom ones:
 Navigate the rover:
 **(hello-rover! "ffbbrrflf")**
 
-### Bugs
-
-...nothing yet
 
 ## License
 
